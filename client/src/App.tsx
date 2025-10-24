@@ -34,6 +34,7 @@ function App() {
   const [wrappedData, setWrappedData] = useState<Record<string, WrappedData>>({});
   const [wrappedLoading, setWrappedLoading] = useState<Record<string, boolean>>({});
   const [selectedTimeRange, setSelectedTimeRange] = useState<string>('long_term');
+  const [sortedTimeRange, setSortedTimeRange] = useState<string | null>(null);
   const [hatTilt, setHatTilt] = useState(false);
   const [houseFlash, setHouseFlash] = useState(false);
   const [toasts, setToasts] = useState<Array<{ id: number; message: string; type?: 'success' | 'error' | 'info' }>>([]);
@@ -147,10 +148,12 @@ function App() {
           normalizedPercentages: (data as any).normalizedPercentages || ({} as any),
           rawScores: (data as any).rawScores || ({} as any)
         });
+        setSortedTimeRange(timeRange);
         showToast('House sorted!', 'success', 2000);
       } else {
         // no valid result
         setHouseInfo(null);
+        setSortedTimeRange(null);
         showToast('Could not determine your house. Try again.', 'error');
       }
       // trigger flash when a new house result arrives
@@ -212,9 +215,10 @@ function App() {
 
   const handleTimeRangeChange = (timeRange: string) => {
     setSelectedTimeRange(timeRange);
-    // Clear house info when changing time ranges
+    // Clear house info and sorted state when changing time ranges
     setHouseInfo(null);
     setGenres([]);
+    setSortedTimeRange(null);
   };
 
   const handleLogout = async () => {
@@ -332,24 +336,35 @@ function App() {
                 </button>
               ))}
             </div>
-            <button
-              className="sort-button"
-              onClick={() => {
-                // tilt the hat for a moment to give feedback
-                setHatTilt(true);
-                setTimeout(() => setHatTilt(false), 600);
-                fetchGenres(selectedTimeRange);
-              }}
-              disabled={loading}
-              aria-label="Sort my house"
-            >
-              <svg className={`sorting-hat ${hatTilt ? 'tilt' : ''}`} width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                <path d="M4 15c1-3 7-5 8-5s7 2 8 5c0 0-1 2-2 2H6c-1 0-2-2-2-2z" fill="#2b1e12" />
-                <path d="M2 12c3-6 9-8 10-8s7 2 10 8c0 0-2 3-4 3H6c-2 0-4-3-4-3z" fill="#3b2a18" />
-                <path d="M6 8c1-1 5-2 6-2s5 1 6 2c0 0-1 1-2 1H8c-1 0-2-1-2-1z" fill="#4b371f" />
-              </svg>
-              <span className="sort-text">{loading ? 'Sorting...' : 'Sort My House!'}</span>
-            </button>
+            {sortedTimeRange === selectedTimeRange && houseInfo ? (
+              <div className="sorted-house-badge">
+                <span className="house-symbol-badge">
+                  {houseInfo.house === 'Auralis' ? '⚡' :
+                   houseInfo.house === 'Nocturne' ? '🌙' :
+                   houseInfo.house === 'Virtuo' ? '📚' : '🎵'}
+                </span>
+                <span className="house-name-badge">House {houseInfo.house}</span>
+              </div>
+            ) : (
+              <button
+                className="sort-button"
+                onClick={() => {
+                  // tilt the hat for a moment to give feedback
+                  setHatTilt(true);
+                  setTimeout(() => setHatTilt(false), 600);
+                  fetchGenres(selectedTimeRange);
+                }}
+                disabled={loading}
+                aria-label="Sort my house"
+              >
+                <svg className={`sorting-hat ${hatTilt ? 'tilt' : ''}`} width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                  <path d="M4 15c1-3 7-5 8-5s7 2 8 5c0 0-1 2-2 2H6c-1 0-2-2-2-2z" fill="#2b1e12" />
+                  <path d="M2 12c3-6 9-8 10-8s7 2 10 8c0 0-2 3-4 3H6c-2 0-4-3-4-3z" fill="#3b2a18" />
+                  <path d="M6 8c1-1 5-2 6-2s5 1 6 2c0 0-1 1-2 1H8c-1 0-2-1-2-1z" fill="#4b371f" />
+                </svg>
+                <span className="sort-text">{loading ? 'Sorting...' : 'Sort My House!'}</span>
+              </button>
+            )}
               {houseInfo ? (
                 <div className={`house-info ${houseFlash ? 'flash' : ''}`} style={{ marginTop: 20, maxWidth: '800px', textAlign: 'left', padding: '20px' }}>
                   <h2>Welcome to House {houseInfo.house}!</h2>
