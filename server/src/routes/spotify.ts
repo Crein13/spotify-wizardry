@@ -68,6 +68,21 @@ router.get('/token', (req, res) => {
   });
 });
 
+// Logout route: Clear session
+router.post('/logout', (req, res) => {
+  if (req.session) {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ error: 'Failed to logout' });
+      }
+      res.clearCookie('connect.sid');
+      return res.json({ success: true });
+    });
+  } else {
+    return res.json({ success: true });
+  }
+});
+
 // Get user's top genres and sort house
 router.post('/genres', async (req, res) => {
   const { accessToken, timeRange = 'long_term' } = req.body;

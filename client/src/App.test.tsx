@@ -70,7 +70,7 @@ describe('App Component', () => {
       }, { timeout: 2000 });
     });
 
-    it('should display welcome message after successful login', async () => {
+    it('should display logout button after successful login', async () => {
       window.location.search = '?loggedin=true';
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
@@ -81,7 +81,7 @@ describe('App Component', () => {
       render(<App />);
 
       await waitFor(() => {
-        expect(screen.getByText('Welcome, you are logged in!')).toBeInTheDocument();
+        expect(screen.getByLabelText('Logout')).toBeInTheDocument();
       }, { timeout: 2000 });
     });
 
@@ -134,7 +134,7 @@ describe('App Component', () => {
       render(<App />);
 
       await waitFor(() => {
-        expect(screen.getByText('Welcome, you are logged in!')).toBeInTheDocument();
+        expect(screen.getByLabelText('Logout')).toBeInTheDocument();
       }, { timeout: 3000 });
 
       expect(screen.getByText('Last 4 Weeks')).toBeInTheDocument();
@@ -158,7 +158,7 @@ describe('App Component', () => {
       render(<App />);
 
       await waitFor(() => {
-        expect(screen.getByText('Welcome, you are logged in!')).toBeInTheDocument();
+        expect(screen.getByLabelText('Logout')).toBeInTheDocument();
       }, { timeout: 3000 });
 
       const allTimeButton = screen.getByText('All Time');
@@ -181,7 +181,7 @@ describe('App Component', () => {
       render(<App />);
 
       await waitFor(() => {
-        expect(screen.getByText('Welcome, you are logged in!')).toBeInTheDocument();
+        expect(screen.getByLabelText('Logout')).toBeInTheDocument();
       }, { timeout: 3000 });
 
       const shortTermButton = screen.getByText('Last 4 Weeks');
@@ -211,7 +211,7 @@ describe('App Component', () => {
       render(<App />);
 
       await waitFor(() => {
-        expect(screen.getByText('Welcome, you are logged in!')).toBeInTheDocument();
+        expect(screen.getByLabelText('Logout')).toBeInTheDocument();
       }, { timeout: 3000 });
 
       const mediumTermButton = screen.getByText('Last 6 Months');
@@ -258,7 +258,7 @@ describe('App Component', () => {
       render(<App />);
 
       await waitFor(() => {
-        expect(screen.getByText('Welcome, you are logged in!')).toBeInTheDocument();
+        expect(screen.getByLabelText('Logout')).toBeInTheDocument();
       }, { timeout: 2000 });
     });
 
@@ -450,7 +450,7 @@ describe('App Component', () => {
       render(<App />);
 
       await waitFor(() => {
-        expect(screen.getByText('Welcome, you are logged in!')).toBeInTheDocument();
+        expect(screen.getByLabelText('Logout')).toBeInTheDocument();
       }, { timeout: 2000 });
     });
 
@@ -503,7 +503,7 @@ describe('App Component', () => {
       render(<App />);
 
       await waitFor(() => {
-        expect(screen.getByText('Welcome, you are logged in!')).toBeInTheDocument();
+        expect(screen.getByLabelText('Logout')).toBeInTheDocument();
       }, { timeout: 2000 });
     });
 
