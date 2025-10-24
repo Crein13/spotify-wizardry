@@ -1,0 +1,58 @@
+/* Time Range Selector */
+.time-range-selector {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.time-range-selector button {
+  background: rgba(255, 255, 255, 0.1);
+  color: #b3b3b3;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.7rem 1.5rem;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.time-range-selector button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+.time-range-selector button.active {
+  background: linear-gradient(135deg, #1db954 0%, #1ed760 100%);
+  color: #fff;
+  border-color: #1db954;
+  box-shadow: 0 4px 15px rgba(29, 185, 84, 0.3);
+}
+
+.time-range-selector button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .time-range-selector {
+    gap: 0.8rem;
+    margin-bottom: 1.5rem;
+  }
+  .time-range-selector button {
+    padding: 0.6rem 1.3rem;
+    font-size: 0.9em;
+  }
+}
+
+@media (max-width: 480px) {
+  .time-range-selector {
+    gap: 0.6rem;
+  }
+  .time-range-selector button {
+    padding: 0.5rem 1rem;
+    font-size: 0.85em;
+  }
+}

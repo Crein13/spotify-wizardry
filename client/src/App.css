@@ -3,6 +3,8 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 /* Navbar */
@@ -506,7 +508,9 @@
   section {
     width: 100%;
     max-width: 900px;
-    padding: 0 20px;
+    padding: 0 1rem;
+    margin: 0 auto;
+    box-sizing: border-box;
   }
 
   section h2, section h3, section h4 {
@@ -523,7 +527,7 @@
 
   @media (max-width: 768px) {
     section {
-      padding: 0 16px;
+      padding: 0 0.75rem;
     }
 
     section h2 {
@@ -545,6 +549,12 @@
     .info-icon::after {
       max-width: min(280px, 85vw);
       font-size: 0.7em;
+    }
+  }
+
+  @media (max-width: 480px) {
+    section {
+      padding: 0 0.5rem;
     }
   }
 

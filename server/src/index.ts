@@ -58,8 +58,25 @@ app.use('/', spotifyRoutes); // This will handle /auth/spotify and /auth/spotify
 app.use('/api/spotify', spotifyRoutes); // This will handle /api/spotify/*
 app.use('/api', houseRoutes);
 
+// Global error handler
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('Unhandled error:', {
+    message: err.message,
+    stack: err.stack,
+    url: req.url,
+    method: req.method
+  });
+  res.status(500).json({
+    error: 'Internal server error',
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+  });
+});
+
 // Start server
 const PORT: number = parseInt(process.env.PORT ?? "5000", 10);
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server is running on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Client URL: ${process.env.CLIENT_URL}`);
+  console.log(`Redirect URI: ${process.env.SPOTIFY_REDIRECT_URI}`);
 });

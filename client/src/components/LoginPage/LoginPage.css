@@ -1,0 +1,491 @@
+/* Login Page */
+.login-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 80px);
+  padding: 1.5rem 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.login-main-title {
+  font-size: 2.5em;
+  margin-bottom: 1rem;
+  text-align: center;
+  font-weight: 700;
+  background: linear-gradient(135deg, #61dafb 0%, #1DB954 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.login-main-description {
+  color: #b8b8b8;
+  font-size: 1.2em;
+  text-align: center;
+  margin-bottom: 3rem;
+  line-height: 1.6;
+}
+
+/* Houses Overview Section */
+.houses-overview {
+  width: 100%;
+  margin-bottom: 3rem;
+}
+
+.houses-title {
+  font-size: 1.8em;
+  text-align: center;
+  margin-bottom: 2rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #61dafb 0%, #1DB954 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.houses-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-bottom: 2rem;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* House Card on Login */
+.house-card-login {
+  position: relative;
+  background: linear-gradient(135deg, #2c2c2c 0%, #1e1e1e 100%);
+  border-radius: 16px;
+  padding: 24px;
+  border: 2px solid transparent;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  cursor: pointer;
+  overflow: visible;
+}
+
+.house-card-login:hover {
+  transform: translateY(-8px);
+  border-color: #61dafb;
+  box-shadow: 0 12px 40px rgba(97, 218, 251, 0.2);
+}
+
+.house-card-login:focus {
+  outline: none;
+  border-color: #61dafb;
+  box-shadow: 0 0 0 4px rgba(97, 218, 251, 0.1);
+}
+
+.house-card-login.active {
+  border-color: #61dafb;
+  box-shadow: 0 12px 40px rgba(97, 218, 251, 0.3);
+}
+
+.house-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.house-name {
+  color: #fff;
+  font-size: 1.8em;
+  margin: 0 0 20px 0;
+  font-weight: 700;
+  text-align: center;
+}
+
+.house-symbol {
+  font-size: 4.5em;
+  opacity: 0.8;
+  transition: transform 0.3s ease;
+}
+
+.house-card-login:hover .house-symbol {
+  transform: scale(1.15) rotate(5deg);
+}
+
+/* Tooltip */
+.house-tooltip {
+  position: absolute;
+  bottom: calc(100% + 16px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #fbf6e3 0%, #f2e9c9 60%, #eddfb9 100%);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 8px;
+  padding: 16px;
+  z-index: 100;
+  box-shadow: 0 8px 30px rgba(45, 30, 10, 0.18), inset 0 -6px 18px rgba(0,0,0,0.04);
+  animation: tooltipSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  max-width: 280px;
+  width: max-content;
+  min-width: 240px;
+}
+
+@keyframes tooltipSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+
+
+.tooltip-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(60, 40, 20, 0.1);
+  border: 1px solid rgba(60, 40, 20, 0.2);
+  color: #3c2814;
+  font-size: 1.4em;
+  line-height: 1;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-family: Georgia, serif;
+}
+
+.tooltip-close:hover {
+  background: rgba(60, 40, 20, 0.2);
+  transform: rotate(90deg);
+}
+
+.tooltip-content {
+  color: #3c2814;
+  font-family: 'Cinzel', 'Georgia', serif;
+}
+
+.tooltip-description {
+  font-size: 0.75em;
+  line-height: 1.4;
+  margin-bottom: 8px;
+  font-family: 'Cinzel', 'Georgia', serif;
+  text-align: center;
+  font-style: italic;
+  color: #2a1f15;
+}
+
+.tooltip-text {
+  font-size: 0.7em;
+  line-height: 1.35;
+  margin-bottom: 6px;
+  font-family: 'Cinzel', 'Georgia', serif;
+  text-align: center;
+  color: #2a1f15;
+}
+
+.tooltip-text:last-child {
+  margin-bottom: 0;
+}
+
+.tooltip-text em {
+  font-weight: 600;
+  font-style: normal;
+  color: #3c2814;
+}
+
+.tooltip-section {
+  margin-top: 10px;
+}
+
+.tooltip-section h4 {
+  color: #3c2814;
+  font-size: 0.7em;
+  font-weight: 700;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-family: 'Cinzel', 'Georgia', serif;
+  text-align: center;
+}
+
+.tooltip-genres,
+.tooltip-traits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+}
+
+.genre-tag {
+  background: rgba(139, 115, 85, 0.15);
+  color: #5a4632;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 0.65em;
+  border: 1px solid rgba(139, 115, 85, 0.3);
+  font-weight: 600;
+  font-family: 'Georgia', serif;
+}
+
+.trait-tag {
+  background: rgba(139, 69, 19, 0.12);
+  color: #6b4423;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 0.65em;
+  border: 1px solid rgba(139, 69, 19, 0.25);
+  font-weight: 600;
+  font-family: 'Georgia', serif;
+}
+
+/* Info Icon with Tooltip */
+.info-icon {
+  position: relative;
+  display: inline-block;
+  color: #61dafb;
+  cursor: help;
+  font-weight: 600;
+  outline: none;
+  padding: 2px 4px;
+  margin: -2px -4px;
+  font-size: 1.2em;
+}
+
+.info-icon:focus {
+  outline: 2px solid #61dafb;
+  border-radius: 4px;
+}
+
+/* Tooltip bubble (parchment-like) */
+.info-icon::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #fbf6e3 0%, #f2e9c9 60%, #eddfb9 100%);
+  color: #2b1e12;
+  padding: 12px 16px;
+  border-radius: 6px;
+  border: 1px solid rgba(0,0,0,0.06);
+  font-size: 0.7em;
+  font-family: 'Goudy Bookletter 1911', Georgia, 'Times New Roman', serif;
+  max-width: min(380px, 90vw);
+  min-width: 200px;
+  width: max-content;
+  white-space: pre-line;
+  word-wrap: break-word;
+  line-height: 1.5;
+  text-align: left;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.16s ease, transform 0.16s cubic-bezier(.2,.9,.2,1);
+  z-index: 30;
+  box-shadow: 0 8px 30px rgba(45, 30, 10, 0.18), inset 0 -6px 18px rgba(0,0,0,0.04);
+  padding-bottom: 14px;
+}
+
+.info-icon:hover::after,
+.info-icon:focus::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-6px);
+}
+
+.info-icon::before {
+  content: '🧙‍♀️';
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%) translateY(0) scale(0.8);
+  font-size: 1.2em;
+  opacity: 0;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  pointer-events: none;
+  animation: twinkle 1.5s ease-in-out infinite;
+}
+
+.info-icon:hover::before,
+.info-icon:focus::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-4px) scale(1);
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.4; transform: translateX(-50%) translateY(-4px) scale(0.8); }
+  50% { opacity: 1; transform: translateX(-50%) translateY(-4px) scale(1.1); }
+}
+
+/* Login Card at Bottom */
+.login-card {
+  text-align: center;
+  width: 100%;
+  max-width: 500px;
+  margin-top: auto;
+  padding: 2rem 0;
+}
+
+.login-button {
+  background: linear-gradient(135deg, #2c2c2c 0%, #1e1e1e 100%);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 1rem 2.2rem;
+  border-radius: 28px;
+  cursor: pointer;
+  font-size: 1.05em;
+  font-weight: 600;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+.login-button:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #353535 0%, #252525 100%);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .login-container {
+    min-height: calc(100vh - 70px);
+    padding: 1rem 0.75rem;
+  }
+
+  .login-main-title {
+    font-size: 1.6em;
+  }
+
+  .login-main-description {
+    font-size: 1em;
+    margin-bottom: 2rem;
+  }
+
+  .houses-title {
+    font-size: 1.5em;
+  }
+
+  .houses-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 0 0.5rem;
+  }
+
+  .house-name {
+    font-size: 1.5em;
+  }
+
+  .house-symbol {
+    font-size: 4em;
+  }
+
+  .house-tooltip {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    bottom: auto;
+    width: calc(100vw - 40px);
+    max-width: 280px;
+    min-width: auto;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  @keyframes tooltipSlideIn {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+  }
+
+
+
+  .login-card {
+    padding: 1.5rem 0;
+  }
+
+  .login-button {
+    padding: 0.9rem 2.2rem;
+    font-size: 1em;
+  }
+
+  .info-icon::after {
+    max-width: min(280px, 85vw);
+    font-size: 0.65em;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-container {
+    min-height: calc(100vh - 65px);
+    padding: 0.75rem 0.5rem;
+  }
+
+  .login-main-title {
+    font-size: 1.4em;
+  }
+
+  .login-main-description {
+    font-size: 0.9em;
+  }
+
+  .houses-title {
+    font-size: 1.3em;
+    margin-bottom: 1.5rem;
+  }
+
+  .house-card-login {
+    padding: 16px;
+  }
+
+  .house-name {
+    font-size: 1.2em;
+  }
+
+  .house-symbol {
+    font-size: 3em;
+  }
+
+  .tooltip-description {
+    font-size: 0.9em;
+  }
+
+  .tooltip-section h4 {
+    font-size: 0.85em;
+  }
+
+  .genre-tag,
+  .trait-tag {
+    font-size: 0.8em;
+    padding: 3px 10px;
+  }
+
+  .login-card {
+    padding: 1.5rem 0;
+  }
+
+  .login-button {
+    padding: 0.8rem 1.8rem;
+    font-size: 0.95em;
+  }
+}

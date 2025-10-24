@@ -1,0 +1,296 @@
+/* House Grid Component */
+.house-grid {
+  width: 100%;
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+.house-grid-title {
+  color: #61dafb;
+  font-size: 2.2em;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.house-grid-subtitle {
+  color: #b8b8b8;
+  font-size: 1.1em;
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.house-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+/* House Card */
+.house-card {
+  position: relative;
+  background: linear-gradient(135deg, #2c2c2c 0%, #1e1e1e 100%);
+  border-radius: 16px;
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid transparent;
+  min-height: 120px;
+  overflow: visible;
+}
+
+.house-card:hover {
+  transform: translateY(-8px);
+  border-color: #61dafb;
+  box-shadow: 0 12px 40px rgba(97, 218, 251, 0.2);
+}
+
+.house-card:focus {
+  outline: none;
+  border-color: #61dafb;
+  box-shadow: 0 0 0 4px rgba(97, 218, 251, 0.1);
+}
+
+.house-card.active {
+  border-color: #61dafb;
+  box-shadow: 0 12px 40px rgba(97, 218, 251, 0.3);
+}
+
+.house-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.house-card-name {
+  color: #fff;
+  font-size: 1.8em;
+  margin: 0;
+  font-weight: 700;
+}
+
+.house-card-icon {
+  font-size: 2.5em;
+  opacity: 0.8;
+  transition: transform 0.3s ease;
+}
+
+.house-card:hover .house-card-icon {
+  transform: scale(1.15) rotate(5deg);
+}
+
+/* Tooltip */
+.house-tooltip {
+  position: absolute;
+  top: calc(100% + 16px);
+  left: 0;
+  right: 0;
+  background: linear-gradient(180deg, #fbf6e3 0%, #f2e9c9 60%, #eddfb9 100%);
+  border: 2px solid rgba(97, 218, 251, 0.3);
+  border-radius: 12px;
+  padding: 20px;
+  z-index: 100;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3),
+              inset 0 -6px 18px rgba(0, 0, 0, 0.04);
+  animation: tooltipSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 320px;
+}
+
+@keyframes tooltipSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tooltip-hat {
+  position: absolute;
+  top: -24px;
+  left: 20px;
+  font-size: 2.5em;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+  animation: hatFloat 2s ease-in-out infinite;
+}
+
+@keyframes hatFloat {
+  0%, 100% {
+    transform: translateY(0) rotate(-5deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(5deg);
+  }
+}
+
+.tooltip-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.1);
+  border: none;
+  color: #2b1e12;
+  font-size: 1.8em;
+  line-height: 1;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.tooltip-close:hover {
+  background: rgba(0, 0, 0, 0.2);
+  transform: rotate(90deg);
+}
+
+.tooltip-content {
+  color: #2b1e12;
+}
+
+.tooltip-description {
+  font-size: 0.95em;
+  line-height: 1.6;
+  margin-bottom: 16px;
+  font-family: 'Goudy Bookletter 1911', Georgia, 'Times New Roman', serif;
+}
+
+.tooltip-section {
+  margin-top: 16px;
+}
+
+.tooltip-section h4 {
+  color: #3a2812;
+  font-size: 0.9em;
+  font-weight: 700;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tooltip-genres,
+.tooltip-traits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.genre-tag {
+  background: rgba(97, 218, 251, 0.15);
+  color: #1a5a6a;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.85em;
+  border: 1px solid rgba(97, 218, 251, 0.3);
+  font-weight: 600;
+}
+
+.trait-tag {
+  background: rgba(255, 215, 0, 0.15);
+  color: #6b5200;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.85em;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .house-grid {
+    padding: 0 16px;
+    margin: 30px auto;
+  }
+
+  .house-grid-title {
+    font-size: 1.8em;
+  }
+
+  .house-grid-subtitle {
+    font-size: 1em;
+    margin-bottom: 30px;
+  }
+
+  .house-cards {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .house-card {
+    padding: 20px;
+  }
+
+  .house-card-name {
+    font-size: 1.5em;
+  }
+
+  .house-tooltip {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    right: auto;
+    width: calc(100vw - 40px);
+    max-width: 400px;
+    min-width: auto;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  @keyframes tooltipSlideIn {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+  }
+
+  .tooltip-hat {
+    top: -20px;
+    left: 16px;
+    font-size: 2em;
+  }
+}
+
+@media (max-width: 480px) {
+  .house-grid-title {
+    font-size: 1.5em;
+  }
+
+  .house-grid-subtitle {
+    font-size: 0.9em;
+  }
+
+  .house-card-name {
+    font-size: 1.3em;
+  }
+
+  .house-card-icon {
+    font-size: 2em;
+  }
+
+  .tooltip-description {
+    font-size: 0.9em;
+  }
+
+  .tooltip-section h4 {
+    font-size: 0.85em;
+  }
+
+  .genre-tag,
+  .trait-tag {
+    font-size: 0.8em;
+    padding: 3px 10px;
+  }
+}

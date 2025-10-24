@@ -3,11 +3,24 @@ import SpotifyWebApi from 'spotify-web-api-node';
 import { sortHouseByGenres, houseDetails } from '../utils/houseSort';
 
 const router = Router();
+
+// Validate environment variables
+if (!process.env.SPOTIFY_CLIENT_ID || !process.env.SPOTIFY_CLIENT_SECRET || !process.env.SPOTIFY_REDIRECT_URI) {
+  console.error('MISSING SPOTIFY CREDENTIALS:', {
+    hasClientId: !!process.env.SPOTIFY_CLIENT_ID,
+    hasClientSecret: !!process.env.SPOTIFY_CLIENT_SECRET,
+    hasRedirectUri: !!process.env.SPOTIFY_REDIRECT_URI
+  });
+  throw new Error('Missing required Spotify API credentials. Please check your environment variables.');
+}
+
 const spotifyApi = new SpotifyWebApi({
   clientId: process.env.SPOTIFY_CLIENT_ID,
   clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
   redirectUri: process.env.SPOTIFY_REDIRECT_URI
 });
+
+console.log('Spotify API initialized with redirect URI:', process.env.SPOTIFY_REDIRECT_URI);
 
 // Spotify OAuth: Step 1 - Redirect to Spotify login
 router.get('/auth/spotify', (req, res) => {
@@ -27,41 +40,70 @@ router.get('/auth/spotify', (req, res) => {
 router.get('/auth/spotify/callback', async (req, res) => {
   const code = req.query.code as string;
   if (!code) {
+    console.error('OAuth callback error: Missing code parameter');
     return res.status(400).send('Missing code parameter');
   }
   try {
+    console.log('Attempting to exchange authorization code for token...');
     const data = await spotifyApi.authorizationCodeGrant(code);
     const accessToken = data.body['access_token'];
     const refreshToken = data.body['refresh_token'];
 
+    console.log('Successfully received tokens from Spotify');
+
     // Store tokens in session
     if (!req.session) {
+      console.error('Session not initialized');
       return res.status(500).send('Session not initialized');
     }
 
     // Save to session and wait for it to be saved
     req.session.accessToken = accessToken;
     req.session.refreshToken = refreshToken;
-    await new Promise((resolve) => req.session.save(resolve));
+
+    await new Promise((resolve, reject) => {
+      req.session.save((err) => {
+        if (err) {
+          console.error('Session save error:', err);
+          reject(err);
+        } else {
+          console.log('Session saved successfully');
+          resolve(true);
+        }
+      });
+    });
 
     // Redirect to frontend
-    res.redirect(`${process.env.CLIENT_URL || 'http://127.0.0.1:3000'}?loggedin=true`);
-  } catch (error) {
-    res.status(500).send('Failed to authenticate with Spotify');
+    const redirectUrl = `${process.env.CLIENT_URL || 'http://127.0.0.1:3000'}?loggedin=true`;
+    console.log('Redirecting to:', redirectUrl);
+    res.redirect(redirectUrl);
+  } catch (error: any) {
+    console.error('Spotify authentication error:', {
+      message: error.message,
+      stack: error.stack,
+      statusCode: error.statusCode,
+      body: error.body
+    });
+    res.status(500).send('Failed to authenticate with Spotify: ' + (error.message || 'Unknown error'));
   }
 });
 
 // Helper route: Get access token from session
 router.get('/token', (req, res) => {
+  console.log('Token request - Session exists:', !!req.session);
+  console.log('Token request - Has accessToken:', !!req.session?.accessToken);
 
   if (!req.session) {
+    console.error('No session available in token request');
     return res.status(500).json({ error: 'No session available' });
   }
 
   if (req.session.accessToken) {
+    console.log('Returning access token from session');
     return res.json({ accessToken: req.session.accessToken });
   }
 
+  console.log('No access token in session');
   return res.status(401).json({
     error: 'Not authenticated',
     details: 'No access token found in session'
@@ -141,8 +183,13 @@ router.post('/genres', async (req, res) => {
       allHouseDetails: allHouseDetailsWithImages,
       ...houseSortResult
     });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch genres from Spotify.' });
+  } catch (error: any) {
+    console.error('Error fetching genres:', {
+      message: error.message,
+      statusCode: error.statusCode,
+      stack: error.stack
+    });
+    res.status(500).json({ error: 'Failed to fetch genres from Spotify.', details: error.message });
   }
 });
 
@@ -164,9 +211,79 @@ router.get('/wrapped', async (req, res) => {
       tracks: topTracksData.body.items || [],
       artists: topArtistsData.body.items || [],
     });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch wrapped data from Spotify.' });
+  } catch (error: any) {
+    console.error('Error fetching wrapped data:', {
+      message: error.message,
+      statusCode: error.statusCode,
+      stack: error.stack
+    });
+    res.status(500).json({ error: 'Failed to fetch wrapped data from Spotify.', details: error.message });
   }
+});
+
+// Get all house details with images
+router.get('/houses', async (req, res) => {
+  if (!req.session.accessToken) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+  try {
+    spotifyApi.setAccessToken(req.session.accessToken);
+
+    // Fetch images for famous musicians from each house
+    const allHouseDetailsWithImages: any = {};
+    for (const houseName of Object.keys(houseDetails)) {
+      const house = houseDetails[houseName as keyof typeof houseDetails];
+      const musiciansWithImages = await Promise.all(
+        house.famousMusicians.map(async (musician: string) => {
+          try {
+            const searchResult = await spotifyApi.searchArtists(musician, { limit: 1 });
+            const artist = searchResult.body.artists?.items[0];
+            return {
+              name: musician,
+              image: artist?.images?.[0]?.url || null,
+              spotifyUrl: artist?.external_urls?.spotify || null
+            };
+          } catch (err) {
+            return { name: musician, image: null, spotifyUrl: null };
+          }
+        })
+      );
+      allHouseDetailsWithImages[houseName] = {
+        ...house,
+        famousMusicians: musiciansWithImages
+      };
+    }
+
+    res.json({ allHouseDetails: allHouseDetailsWithImages });
+  } catch (error: any) {
+    console.error('Error fetching house details:', {
+      message: error.message,
+      statusCode: error.statusCode,
+      stack: error.stack
+    });
+    res.status(500).json({ error: 'Failed to fetch house details from Spotify.', details: error.message });
+  }
+});
+
+// Get basic house details (public, no auth required)
+router.get('/houses/basic', (req, res) => {
+  // Return house details without artist images (for public access)
+  const basicHouseDetails: any = {};
+  for (const houseName of Object.keys(houseDetails)) {
+    const house = houseDetails[houseName as keyof typeof houseDetails];
+    basicHouseDetails[houseName] = {
+      genres: house.genres,
+      description: house.description,
+      traits: house.traits,
+      musicPersonality: house.musicPersonality,
+      famousMusicians: house.famousMusicians.map((name: string) => ({
+        name,
+        image: null,
+        spotifyUrl: null
+      }))
+    };
+  }
+  res.json({ allHouseDetails: basicHouseDetails });
 });
 
 export default router;

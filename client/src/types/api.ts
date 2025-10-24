@@ -39,3 +39,22 @@ export interface GenresApiResponse extends HouseSortResult {
   topArtists: TopArtist[];
   allHouseDetails: Record<HouseName, HouseInfo>;
 }
+
+export interface WrappedTrack {
+  name: string;
+  artistNames: string[];
+  url: string;
+  cover?: string | null;
+}
+
+export interface WrappedArtist {
+  name: string;
+  url: string;
+  image?: string | null;
+  genres: string[];
+}
+
+export interface WrappedData {
+  tracks: WrappedTrack[];
+  artists: WrappedArtist[];
+}
