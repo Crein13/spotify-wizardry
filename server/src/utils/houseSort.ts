@@ -8,7 +8,7 @@ interface HouseInfo {
   famousMusicians: string[];
 }
 
-const houseDetails: Record<HouseName, HouseInfo> = {
+export const houseDetails: Record<HouseName, HouseInfo> = {
   Auralis: {
     genres: ['edm', 'dance', 'pop', 'rock', 'hip hop'],
     description: "The House of Energy and Innovation. Auralis wizards are drawn to powerful, upbeat rhythms and cutting-edge sounds. Their music taste reflects their bold, adventurous spirit and their ability to energize those around them.",

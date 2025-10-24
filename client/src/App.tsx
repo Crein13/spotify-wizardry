@@ -35,14 +35,41 @@ interface WrappedData {
 function App() {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [genres, setGenres] = useState<string[]>([]);
-    const [houseInfo, setHouseInfo] = useState<HouseInfo | null>(null);
+  const [houseInfo, setHouseInfo] = useState<HouseInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [wrappedData, setWrappedData] = useState<Record<string, WrappedData>>({});
+  const [selectedTimeRange, setSelectedTimeRange] = useState<string>('long_term');
+  const [hatTilt, setHatTilt] = useState(false);
+  const [houseFlash, setHouseFlash] = useState(false);
   const timeRanges = [
     { key: 'short_term', label: 'Last 4 Weeks' },
     { key: 'medium_term', label: 'Last 6 Months' },
     { key: 'long_term', label: 'All Time' }
   ];
+
+  // Short descriptions for each house to show in tooltips (music-personality focused)
+  const HOUSE_META: Record<string, { shortDesc: string; musicPersonality: string; examples?: string[] }> = {
+    Auralis: {
+      shortDesc: 'The House of Energy and Innovation — drawn to upbeat, modern, and danceable sounds.',
+      musicPersonality: "You thrive on rhythm and bold production; music energizes your day.",
+      examples: ['Lady Gaga', 'The Weeknd']
+    },
+    Nocturne: {
+      shortDesc: 'The House of Depth and Mystery — favors moody, atmospheric, and soulful music.',
+      musicPersonality: "You listen for feeling and texture; songs are emotional landscapes to you.",
+      examples: ['Billie Eilish', 'Frank Ocean']
+    },
+    Virtuo: {
+      shortDesc: 'The House of Mastery and Experimentation — appreciates complex, technical compositions.',
+      musicPersonality: "You value craftsmanship and subtlety; intricate arrangements speak to you.",
+      examples: ['Miles Davis', 'Beethoven']
+    },
+    Folklore: {
+      shortDesc: 'The House of Story and Tradition — loves acoustic, lyrical, and authentic songwriting.',
+      musicPersonality: "You connect through stories and honest performances; lyrics matter most.",
+      examples: ['Joni Mitchell', 'Bob Dylan']
+    }
+  };
 
     // After login, fetch access token from backend session
   React.useEffect(() => {
@@ -85,8 +112,8 @@ function App() {
     }
   }, []);
 
-  // Fetch genres from backend
-  const fetchGenres = async () => {
+  // Fetch genres from backend (for a given time range)
+  const fetchGenres = async (timeRange: string = selectedTimeRange) => {
     if (!accessToken) return;
     setLoading(true);
     try {
@@ -94,7 +121,7 @@ function App() {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accessToken }),
+        body: JSON.stringify({ accessToken, timeRange }),
       });
       const data = await res.json();
       setGenres(data.genres || []);
@@ -106,14 +133,16 @@ function App() {
         famousMusicians: data.famousMusicians,
         matchScore: data.matchScore,
         housePercentages: data.housePercentages || {},
-        compatibility: data.compatibility || {}
-      ,
+        compatibility: data.compatibility || {},
         normalizedPercentages: data.normalizedPercentages || {},
         rawScores: data.rawScores || {}
       });
+      // trigger flash when a new house result arrives
+      setHouseFlash(true);
+      setTimeout(() => setHouseFlash(false), 700);
     } catch (err) {
-        console.error('Error fetching genres and house info:', err);
-        alert('Error analyzing your music taste');
+      console.error('Error fetching genres and house info:', err);
+      alert('Error analyzing your music taste');
     }
     setLoading(false);
   };
@@ -138,12 +167,16 @@ function App() {
     }
   };
 
-  // Fetch all wrapped data when logged in
-  useEffect(() => {
-    if (accessToken) {
-      timeRanges.forEach(({ key }) => fetchWrappedData(key));
-    }
-  }, [accessToken]);
+  // Fetch wrapped data and genres for the selected time range when logged in or when the range changes
+    useEffect(() => {
+      if (accessToken) {
+        fetchWrappedData(selectedTimeRange);
+      }
+    }, [accessToken, selectedTimeRange]);
+
+  const handleTimeRangeChange = (timeRange: string) => {
+    setSelectedTimeRange(timeRange);
+  };
 
   return (
     <div className="App">
@@ -156,11 +189,48 @@ function App() {
         ) : (
           <>
             <p>Welcome, you are logged in!</p>
-            <button onClick={fetchGenres} disabled={loading}>
-              {loading ? 'Sorting...' : 'Sort My House!'}
+            {/* Time Range Selector */}
+            <div className="time-range-selector" style={{ marginBottom: '16px' }}>
+              {timeRanges.map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => handleTimeRangeChange(key)}
+                  className={`time-range-button ${selectedTimeRange === key ? 'active' : ''}`}
+                  aria-pressed={selectedTimeRange === key}
+                  style={{
+                    margin: '0 8px',
+                    padding: '8px 14px',
+                    border: 'none',
+                    borderRadius: '18px',
+                    background: selectedTimeRange === key ? '#61dafb' : '#2c2c2c',
+                    color: selectedTimeRange === key ? '#000' : '#fff',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <button
+              className="sort-button"
+              onClick={() => {
+                // tilt the hat for a moment to give feedback
+                setHatTilt(true);
+                setTimeout(() => setHatTilt(false), 600);
+                fetchGenres(selectedTimeRange);
+              }}
+              disabled={loading}
+              aria-label="Sort my house"
+            >
+              <svg className={`sorting-hat ${hatTilt ? 'tilt' : ''}`} width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                <path d="M4 15c1-3 7-5 8-5s7 2 8 5c0 0-1 2-2 2H6c-1 0-2-2-2-2z" fill="#2b1e12" />
+                <path d="M2 12c3-6 9-8 10-8s7 2 10 8c0 0-2 3-4 3H6c-2 0-4-3-4-3z" fill="#3b2a18" />
+                <path d="M6 8c1-1 5-2 6-2s5 1 6 2c0 0-1 1-2 1H8c-1 0-2-1-2-1z" fill="#4b371f" />
+              </svg>
+              <span className="sort-text">{loading ? 'Sorting...' : 'Sort My House!'}</span>
             </button>
               {houseInfo && (
-                <div className="house-info" style={{ marginTop: 20, maxWidth: '800px', textAlign: 'left', padding: '20px' }}>
+                <div className={`house-info ${houseFlash ? 'flash' : ''}`} style={{ marginTop: 20, maxWidth: '800px', textAlign: 'left', padding: '20px' }}>
                   <h2>Welcome to House {houseInfo.house}!</h2>
                   <div className="match-score" style={{ marginBottom: '20px' }}>
                     <p style={{ fontSize: '1.2em' }}>
@@ -240,11 +310,29 @@ function App() {
                         .map((h) => {
                         const pct = houseInfo.normalizedPercentages?.[h] ?? houseInfo.housePercentages?.[h] ?? 0;
                         const comp = houseInfo.compatibility?.[h] ?? 0;
+                        const raw = houseInfo.rawScores?.[h] ?? 0;
                         const isTop = h === houseInfo.house;
+                        const meta = HOUSE_META[h] || { shortDesc: '', musicPersonality: '' };
+                        const tipText = `${meta.shortDesc} ${meta.musicPersonality} ${meta.examples ? 'Notable: ' + meta.examples.join(', ') : ''}`;
                         return (
                           <div key={h} className="house-row" style={{ marginBottom: 12 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <strong style={{ color: isTop ? '#61dafb' : '#fff' }}>{h}</strong>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <strong style={{ color: isTop ? '#61dafb' : '#fff' }}>{h}</strong>
+                                <span
+                                  className="info-icon"
+                                  tabIndex={0}
+                                  role="button"
+                                  aria-label={`Details for ${h}`}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                      e.preventDefault();
+                                      e.currentTarget.focus();
+                                    }
+                                  }}
+                                  data-tip={tipText}
+                                >ⓘ</span>
+                              </div>
                               <span style={{ color: '#b8b8b8' }}>{pct}%</span>
                             </div>
                             <div className="percent-bar" style={{ background: '#2a2a2a', height: 12, borderRadius: 8, overflow: 'hidden', marginTop: 6 }}>
@@ -266,51 +354,47 @@ function App() {
             )}
             <section style={{ marginTop: 40 }}>
               <h2>Your Spotify Wrapped</h2>
-              {timeRanges.map(({ key, label }) => (
-                <div key={key} style={{ marginTop: 20 }}>
-                  <h3>{label}</h3>
-                  {wrappedData[key] && (
-                    <div>
-                      <div>
-                        <h4>Top Tracks</h4>
-                        <ul style={{ listStyle: 'none', padding: 0 }}>
-                          {wrappedData[key].tracks.map((track: Track) => (
-                            <li key={track.name} style={{ margin: '10px 0' }}>
-                              <a
-                                href={track.external_urls.spotify}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="App-link"
-                              >
-                                {track.name}
-                              </a>
-                              <span> by {track.artists.map(a => a.name).join(', ')}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div>
-                        <h4>Top Artists</h4>
-                        <ul style={{ listStyle: 'none', padding: 0 }}>
-                          {wrappedData[key].artists.map((artist: Artist) => (
-                            <li key={artist.name} style={{ margin: '10px 0' }}>
-                              <a
-                                href={artist.external_urls.spotify}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="App-link"
-                              >
-                                {artist.name}
-                              </a>
-                              <span> ({artist.genres.slice(0, 3).join(', ')})</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  )}
+              {wrappedData[selectedTimeRange] && (
+                <div style={{ marginTop: 20 }}>
+                  <h3>{timeRanges.find(t => t.key === selectedTimeRange)?.label}</h3>
+                  <div>
+                    <h4>Top Tracks</h4>
+                    <ul style={{ listStyle: 'none', padding: 0 }}>
+                      {wrappedData[selectedTimeRange].tracks.map((track: Track) => (
+                        <li key={track.name} style={{ margin: '10px 0' }}>
+                          <a
+                            href={track.external_urls.spotify}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="App-link"
+                          >
+                            {track.name}
+                          </a>
+                          <span> by {track.artists.map(a => a.name).join(', ')}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h4>Top Artists</h4>
+                    <ul style={{ listStyle: 'none', padding: 0 }}>
+                      {wrappedData[selectedTimeRange].artists.map((artist: Artist) => (
+                        <li key={artist.name} style={{ margin: '10px 0' }}>
+                          <a
+                            href={artist.external_urls.spotify}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="App-link"
+                          >
+                            {artist.name}
+                          </a>
+                          <span> ({artist.genres.slice(0, 3).join(', ')})</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-              ))}
+              )}
             </section>
           </>
         )}

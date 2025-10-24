@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import SpotifyWebApi from 'spotify-web-api-node';
-import { sortHouseByGenres } from '../utils/houseSort';
+import { sortHouseByGenres, houseDetails } from '../utils/houseSort';
 
 const router = Router();
 const spotifyApi = new SpotifyWebApi({
@@ -86,24 +86,36 @@ router.get('/token', (req, res) => {
 
 // Get user's top genres and sort house
 router.post('/genres', async (req, res) => {
-  const { accessToken } = req.body;
+  const { accessToken, timeRange = 'long_term' } = req.body;
   if (!accessToken) {
     return res.status(400).json({ error: 'Missing Spotify access token.' });
   }
   try {
     spotifyApi.setAccessToken(accessToken);
-    const topArtistsData = await spotifyApi.getMyTopArtists({ limit: 20 });
+    // Fetch top artists for the requested time range
+    const topArtistsData = await spotifyApi.getMyTopArtists({ limit: 20, time_range: timeRange });
     const genresSet = new Set<string>();
     topArtistsData.body.items.forEach((artist: any) => {
       artist.genres.forEach((genre: string) => genresSet.add(genre));
     });
     const genres = Array.from(genresSet);
-      const houseSortResult = sortHouseByGenres(genres);
-      // Return genres and the entire house sort result (including percentages and compatibility)
-      res.json({
-        genres,
-        ...houseSortResult
-      });
+
+    // Build a lightweight topArtists array to return to the client (for tooltip examples)
+    const topArtists = topArtistsData.body.items.map((artist: any) => ({
+      name: artist.name,
+      spotifyUrl: artist.external_urls?.spotify,
+      image: Array.isArray(artist.images) && artist.images.length > 0 ? artist.images[0].url : null,
+      genres: artist.genres || []
+    }));
+
+    const houseSortResult = sortHouseByGenres(genres);
+    // Return genres, top artists, and the entire house sort result (including percentages and compatibility)
+    res.json({
+      genres,
+      topArtists,
+      allHouseDetails: houseDetails,
+      ...houseSortResult
+    });
   } catch (error) {
     console.error('Error fetching Spotify genres:', error);
     res.status(500).json({ error: 'Failed to fetch genres from Spotify.' });
