@@ -2,7 +2,6 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import SpotifyWebApi from 'spotify-web-api-node';
 import session from 'express-session';
 import cookieParser from 'cookie-parser';
 
@@ -13,7 +12,7 @@ declare module 'express-session' {
     refreshToken?: string;
   }
 }
-import { sortHouseByGenres } from './utils/houseSort';
+// Note: house sorting utilities are used within route handlers, not here
 
 dotenv.config();
 
@@ -43,12 +42,7 @@ app.use(session({
   }
 }));
 
-// Initialize Spotify API client
-const spotifyApi = new SpotifyWebApi({
-  clientId: process.env.SPOTIFY_CLIENT_ID,
-  clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
-  redirectUri: process.env.SPOTIFY_REDIRECT_URI
-});
+// Spotify API client is initialized within the spotify routes where needed
 
 // Basic route
 app.get('/', (req, res) => {

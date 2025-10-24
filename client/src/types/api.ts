@@ -1,11 +1,17 @@
 export type HouseName = 'Auralis' | 'Nocturne' | 'Virtuo' | 'Folklore';
 
+export interface FamousMusician {
+  name: string;
+  image?: string | null;
+  spotifyUrl?: string | null;
+}
+
 export interface HouseInfo {
   genres: string[];
   description: string;
   traits: string[];
   musicPersonality: string;
-  famousMusicians: string[];
+  famousMusicians: FamousMusician[];
 }
 
 export interface HouseSortResult {
@@ -13,7 +19,7 @@ export interface HouseSortResult {
   description: string;
   traits: string[];
   musicPersonality: string;
-  famousMusicians: string[];
+  famousMusicians: FamousMusician[];
   matchScore: number;
   housePercentages: Record<HouseName, number>;
   compatibility: Record<HouseName, number>;

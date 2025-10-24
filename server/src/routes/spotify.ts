@@ -108,11 +108,37 @@ router.post('/genres', async (req, res) => {
     }));
 
     const houseSortResult = sortHouseByGenres(genres);
+
+    // Fetch images for famous musicians from each house
+    const allHouseDetailsWithImages: any = {};
+    for (const houseName of Object.keys(houseDetails)) {
+      const house = houseDetails[houseName as keyof typeof houseDetails];
+      const musiciansWithImages = await Promise.all(
+        house.famousMusicians.map(async (musician: string) => {
+          try {
+            const searchResult = await spotifyApi.searchArtists(musician, { limit: 1 });
+            const artist = searchResult.body.artists?.items[0];
+            return {
+              name: musician,
+              image: artist?.images?.[0]?.url || null,
+              spotifyUrl: artist?.external_urls?.spotify || null
+            };
+          } catch (err) {
+            return { name: musician, image: null, spotifyUrl: null };
+          }
+        })
+      );
+      allHouseDetailsWithImages[houseName] = {
+        ...house,
+        famousMusicians: musiciansWithImages
+      };
+    }
+
     // Return genres, top artists, and the entire house sort result (including percentages and compatibility)
     res.json({
       genres,
       topArtists,
-      allHouseDetails: houseDetails,
+      allHouseDetails: allHouseDetailsWithImages,
       ...houseSortResult
     });
   } catch (error) {

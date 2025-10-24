@@ -1,74 +1,57 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import type { GenresApiResponse, TopArtist, HouseName, HouseInfo as ApiHouseInfo, HouseSortResult } from './types/api';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://127.0.0.1:5000';
-interface HouseInfo {
-  house: string;
-  description: string;
-  traits: string[];
-  musicPersonality: string;
-  famousMusicians: string[];
-  matchScore: number;
-  housePercentages: Record<string, number>;
-  compatibility: Record<string, number>;
-  normalizedPercentages?: Record<string, number>;
-  rawScores?: Record<string, number>;
+
+// Normalized wrapped types for UI rendering with images
+interface WrappedTrack {
+  name: string;
+  artistNames: string[];
+  url: string;
+  cover?: string | null;
 }
 
-interface Track {
+interface WrappedArtist {
   name: string;
-  artists: { name: string }[];
-  external_urls: { spotify: string };
-}
-
-interface Artist {
-  name: string;
+  url: string;
+  image?: string | null;
   genres: string[];
-  external_urls: { spotify: string };
 }
 
 interface WrappedData {
-  tracks: Track[];
-  artists: Artist[];
+  tracks: WrappedTrack[];
+  artists: WrappedArtist[];
 }
 
 function App() {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [genres, setGenres] = useState<string[]>([]);
-  const [houseInfo, setHouseInfo] = useState<HouseInfo | null>(null);
+  const [houseInfo, setHouseInfo] = useState<HouseSortResult | null>(null);
+  const [topArtists, setTopArtists] = useState<TopArtist[]>([]);
+  const [allHouseDetails, setAllHouseDetails] = useState<Record<HouseName, ApiHouseInfo> | null>(null);
   const [loading, setLoading] = useState(false);
   const [wrappedData, setWrappedData] = useState<Record<string, WrappedData>>({});
+  const [wrappedLoading, setWrappedLoading] = useState<Record<string, boolean>>({});
   const [selectedTimeRange, setSelectedTimeRange] = useState<string>('long_term');
   const [hatTilt, setHatTilt] = useState(false);
   const [houseFlash, setHouseFlash] = useState(false);
+  const [toasts, setToasts] = useState<Array<{ id: number; message: string; type?: 'success' | 'error' | 'info' }>>([]);
+  const toastIdRef = React.useRef(0);
   const timeRanges = [
     { key: 'short_term', label: 'Last 4 Weeks' },
     { key: 'medium_term', label: 'Last 6 Months' },
     { key: 'long_term', label: 'All Time' }
   ];
+  // All house metadata now comes from the server via allHouseDetails
 
-  // Short descriptions for each house to show in tooltips (music-personality focused)
-  const HOUSE_META: Record<string, { shortDesc: string; musicPersonality: string; examples?: string[] }> = {
-    Auralis: {
-      shortDesc: 'The House of Energy and Innovation — drawn to upbeat, modern, and danceable sounds.',
-      musicPersonality: "You thrive on rhythm and bold production; music energizes your day.",
-      examples: ['Lady Gaga', 'The Weeknd']
-    },
-    Nocturne: {
-      shortDesc: 'The House of Depth and Mystery — favors moody, atmospheric, and soulful music.',
-      musicPersonality: "You listen for feeling and texture; songs are emotional landscapes to you.",
-      examples: ['Billie Eilish', 'Frank Ocean']
-    },
-    Virtuo: {
-      shortDesc: 'The House of Mastery and Experimentation — appreciates complex, technical compositions.',
-      musicPersonality: "You value craftsmanship and subtlety; intricate arrangements speak to you.",
-      examples: ['Miles Davis', 'Beethoven']
-    },
-    Folklore: {
-      shortDesc: 'The House of Story and Tradition — loves acoustic, lyrical, and authentic songwriting.',
-      musicPersonality: "You connect through stories and honest performances; lyrics matter most.",
-      examples: ['Joni Mitchell', 'Bob Dylan']
-    }
+  // Toast helpers
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info', timeout = 3000) => {
+    const id = ++toastIdRef.current;
+    setToasts((prev) => [...prev, { id, message, type }]);
+    window.setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, timeout);
   };
 
     // After login, fetch access token from backend session
@@ -111,36 +94,71 @@ function App() {
     }
   }, []);
 
-  // Fetch genres from backend (for a given time range)
+  // Fetch genres from backend (for a given time range) with retry
   const fetchGenres = async (timeRange: string = selectedTimeRange) => {
     if (!accessToken) return;
     setLoading(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/spotify/genres`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accessToken, timeRange }),
-      });
-      const data = await res.json();
-      setGenres(data.genres || []);
-      setHouseInfo({
-        house: data.house,
-        description: data.description,
-        traits: data.traits,
-        musicPersonality: data.musicPersonality,
-        famousMusicians: data.famousMusicians,
-        matchScore: data.matchScore,
-        housePercentages: data.housePercentages || {},
-        compatibility: data.compatibility || {},
-        normalizedPercentages: data.normalizedPercentages || {},
-        rawScores: data.rawScores || {}
-      });
+      // Retry fetch up to 3 times with backoff
+      const doFetch = async () => {
+        const res = await fetch(`${BACKEND_URL}/api/spotify/genres`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accessToken, timeRange }),
+        });
+        if (!res.ok) {
+          let details = '';
+          try { details = JSON.stringify(await res.json()); } catch {}
+          throw new Error(`Failed to fetch genres (${res.status}). ${details}`);
+        }
+        return res.json();
+      };
+
+      let data: Partial<GenresApiResponse> | null = null;
+      let lastError: any = null;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const result = await doFetch();
+          data = result;
+          break;
+        } catch (e) {
+          lastError = e;
+          if (attempt < 3) {
+            await new Promise((r) => setTimeout(r, 500 * attempt));
+          }
+        }
+      }
+      if (!data) throw lastError || new Error('Unknown error fetching genres');
+
+      setGenres(Array.isArray(data.genres) ? data.genres : []);
+      setTopArtists(Array.isArray(data.topArtists) ? data.topArtists : []);
+      setAllHouseDetails(data.allHouseDetails || null);
+      if (data && data.house) {
+        setHouseInfo({
+          house: data.house as any,
+          description: (data as any).description || '',
+          traits: Array.isArray((data as any).traits) ? (data as any).traits : [],
+          musicPersonality: (data as any).musicPersonality || '',
+          famousMusicians: Array.isArray((data as any).famousMusicians) ? (data as any).famousMusicians : [],
+          matchScore: (data as any).matchScore ?? 0,
+          housePercentages: (data as any).housePercentages || ({} as any),
+          compatibility: (data as any).compatibility || ({} as any),
+          normalizedPercentages: (data as any).normalizedPercentages || ({} as any),
+          rawScores: (data as any).rawScores || ({} as any)
+        });
+        showToast('House sorted!', 'success', 2000);
+      } else {
+        // no valid result
+        setHouseInfo(null);
+        showToast('Could not determine your house. Try again.', 'error');
+      }
       // trigger flash when a new house result arrives
       setHouseFlash(true);
       setTimeout(() => setHouseFlash(false), 700);
     } catch (err) {
-      alert('Error analyzing your music taste');
+      console.error(err);
+      showToast('Error analyzing your music taste. Please try again.', 'error');
     }
     setLoading(false);
   };
@@ -149,19 +167,39 @@ function App() {
   const fetchWrappedData = async (timeRange: string) => {
     if (!accessToken) return;
     try {
+      setWrappedLoading(prev => ({ ...prev, [timeRange]: true }));
       const res = await fetch(`${BACKEND_URL}/api/spotify/wrapped?time_range=${timeRange}`, {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json'
         }
       });
-      const data = await res.json();
-      setWrappedData(prev => ({
-        ...prev,
-        [timeRange]: data
-      }));
+      const raw = await res.json();
+      // Normalize server response to include image URLs for UI
+      const normalized: WrappedData = {
+        tracks: Array.isArray(raw.tracks)
+          ? raw.tracks.map((t: any) => ({
+              name: t?.name,
+              artistNames: Array.isArray(t?.artists) ? t.artists.map((a: any) => a?.name).filter(Boolean) : [],
+              url: t?.external_urls?.spotify || '#',
+              cover: Array.isArray(t?.album?.images) && t.album.images.length > 0 ? t.album.images[0].url : null,
+            }))
+          : [],
+        artists: Array.isArray(raw.artists)
+          ? raw.artists.map((a: any) => ({
+              name: a?.name,
+              url: a?.external_urls?.spotify || '#',
+              image: Array.isArray(a?.images) && a.images.length > 0 ? a.images[0].url : null,
+              genres: Array.isArray(a?.genres) ? a.genres : [],
+            }))
+          : []
+      };
+      setWrappedData(prev => ({ ...prev, [timeRange]: normalized }));
     } catch (err) {
       // Silently handle error - wrapped data is optional
+    }
+    finally {
+      setWrappedLoading(prev => ({ ...prev, [timeRange]: false }));
     }
   };
 
@@ -204,6 +242,14 @@ function App() {
 
   return (
     <div className="App">
+      {/* Toast Notifications */}
+      <div className="toasts" aria-live="polite" aria-atomic="true">
+        {toasts.map((t) => (
+          <div key={t.id} className={`toast ${t.type || 'info'}`}>
+            {t.message}
+          </div>
+        ))}
+      </div>
       {/* Navbar */}
       <nav className="navbar">
         <div className="navbar-content">
@@ -304,7 +350,7 @@ function App() {
               </svg>
               <span className="sort-text">{loading ? 'Sorting...' : 'Sort My House!'}</span>
             </button>
-              {houseInfo && (
+              {houseInfo ? (
                 <div className={`house-info ${houseFlash ? 'flash' : ''}`} style={{ marginTop: 20, maxWidth: '800px', textAlign: 'left', padding: '20px' }}>
                   <h2>Welcome to House {houseInfo.house}!</h2>
                   <div className="match-score" style={{ marginBottom: '20px' }}>
@@ -332,7 +378,7 @@ function App() {
                   <div className="traits" style={{ marginBottom: '20px' }}>
                     <h3>House Traits</h3>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                      {houseInfo.traits.map(trait => (
+                      {(houseInfo.traits || []).map(trait => (
                         <span key={trait} style={{
                           padding: '5px 15px',
                           borderRadius: '20px',
@@ -346,11 +392,11 @@ function App() {
                   </div>
                   <div className="music-personality" style={{ marginBottom: '20px' }}>
                     <h3>Your Music Personality</h3>
-                    <p>{houseInfo.musicPersonality}</p>
+                    <p>{houseInfo.musicPersonality || ''}</p>
                   </div>
                   <div className="famous-musicians">
                     <h3>Notable House Members</h3>
-                    <p>{houseInfo.famousMusicians.join(' • ')}</p>
+                    <p>{(houseInfo.famousMusicians || []).map((m: any) => m.name || m).join(' • ')}</p>
                   </div>
                   <div className="genres" style={{ marginTop: '20px' }}>
                     <h3>Your Musical Genres</h3>
@@ -376,25 +422,23 @@ function App() {
                       >ⓘ</span>
                     </h3>
                     <div className="house-list">
-                      {['Auralis', 'Nocturne', 'Virtuo', 'Folklore']
+                      {(['Auralis', 'Nocturne', 'Virtuo', 'Folklore'] as HouseName[])
                         .filter((h) => {
                           // show house if it's the top house or has a raw score > 0
-                          const raw = houseInfo.rawScores?.[h] ?? 0;
+                          const raw = (houseInfo.rawScores as any)?.[h] ?? 0;
                           return h === houseInfo.house || raw > 0;
                         })
                         .map((h) => {
-                        const pct = houseInfo.normalizedPercentages?.[h] ?? houseInfo.housePercentages?.[h] ?? 0;
-                        const comp = houseInfo.compatibility?.[h] ?? 0;
+                        const pct = (houseInfo.normalizedPercentages as any)?.[h] ?? (houseInfo.housePercentages as any)?.[h] ?? 0;
+                        const comp = (houseInfo.compatibility as any)?.[h] ?? 0;
                         const isTop = h === houseInfo.house;
-                        const meta = HOUSE_META[h] || { shortDesc: '', musicPersonality: '' };
-                        const tipText = `${meta.shortDesc} ${meta.musicPersonality} ${meta.examples ? 'Notable: ' + meta.examples.join(', ') : ''}`;
                         return (
                           <div key={h} className="house-row" style={{ marginBottom: 12 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                 <strong style={{ color: isTop ? '#61dafb' : '#fff' }}>{h}</strong>
                                 <span
-                                  className="info-icon"
+                                  className="info-icon thumb-tooltip"
                                   tabIndex={0}
                                   role="button"
                                   aria-label={`Details for ${h}`}
@@ -404,8 +448,39 @@ function App() {
                                       e.currentTarget.focus();
                                     }
                                   }}
-                                  data-tip={tipText}
-                                >ⓘ</span>
+                                >
+                                  ⓘ
+                                  <div className="tooltip-box" role="dialog" aria-label={`${h} details`}>
+                                    <div className="tooltip-text">
+                                      {allHouseDetails?.[h]?.musicPersonality || ''}
+                                    </div>
+                                    {allHouseDetails?.[h]?.famousMusicians?.length ? (
+                                      <div className="tooltip-notable">
+                                        Notable: {allHouseDetails[h].famousMusicians.slice(0, 3).map((m: any) => m.name).join(', ')}
+                                      </div>
+                                    ) : null}
+                                    {allHouseDetails?.[h]?.famousMusicians?.length ? (
+                                      <div className="tooltip-artists" aria-label="Famous artists from this house">
+                                        {allHouseDetails[h].famousMusicians.slice(0, 3).map((musician: any, idx: number) => (
+                                          <a
+                                            key={musician.name + idx}
+                                            href={musician.spotifyUrl || '#'}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            title={musician.name}
+                                            className="artist-thumb famous-artist"
+                                          >
+                                            {musician.image ? (
+                                              <img loading="lazy" src={musician.image} alt={musician.name} />
+                                            ) : (
+                                              <span className="artist-fallback">{musician.name.charAt(0)}</span>
+                                            )}
+                                          </a>
+                                        ))}
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                </span>
                               </div>
                               <span style={{ color: '#b8b8b8' }}>{pct}%</span>
                             </div>
@@ -425,50 +500,88 @@ function App() {
                     </div>
                   </div>
               </div>
+            ) : (
+              <div className="house-info empty-state" style={{ marginTop: 20, maxWidth: '800px', textAlign: 'center', padding: '24px' }}>
+                <div className="empty-emoji" aria-hidden>🪄</div>
+                <h3 className="empty-title">Ready for Sorting</h3>
+                <p className="empty-text">Choose a time range and tap "Sort My House!" to reveal your magical musical house.</p>
+              </div>
             )}
             <section style={{ marginTop: 40 }}>
               <h2>Your Spotify Wrapped</h2>
-              {wrappedData[selectedTimeRange] && (
+              {wrappedData[selectedTimeRange] ? (
                 <div style={{ marginTop: 20 }}>
                   <h3>{timeRanges.find(t => t.key === selectedTimeRange)?.label}</h3>
                   <div>
                     <h4>Top Tracks</h4>
-                    <ul style={{ listStyle: 'none', padding: 0 }}>
-                      {wrappedData[selectedTimeRange].tracks.map((track: Track) => (
-                        <li key={track.name} style={{ margin: '10px 0' }}>
-                          <a
-                            href={track.external_urls.spotify}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="App-link"
-                          >
-                            {track.name}
-                          </a>
-                          <span> by {track.artists.map(a => a.name).join(', ')}</span>
-                        </li>
+                    <div className="wrapped-grid">
+                      {(wrappedLoading[selectedTimeRange] ? Array.from({ length: 8 }, (_, i) => ({ __key: i })) : wrappedData[selectedTimeRange].tracks).map((track: any) => (
+                        <a
+                          key={track.__key ?? track.name + track.url}
+                          href={track.url || '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`card track-card ${track.__key !== undefined ? 'skeleton' : ''}`}
+                          aria-label={track.__key !== undefined ? 'Loading track' : `Open ${track.name} on Spotify`}
+                        >
+                          <div className="cover">
+                            {track.__key !== undefined ? (
+                              <div className="cover-fallback shimmer" />
+                            ) : track.cover ? (
+                              <img loading="lazy" src={track.cover} alt={`${track.name} cover`} />
+                            ) : (
+                              <div className="cover-fallback">♪</div>
+                            )}
+                          </div>
+                          <div className="card-text">
+                            <div className="title" title={track.name}>{track.__key !== undefined ? '\u00A0' : track.name}</div>
+                            <div className="subtitle" title={track.artistNames?.join(', ')}>
+                              {track.__key !== undefined ? '\u00A0' : track.artistNames.join(', ')}
+                            </div>
+                          </div>
+                        </a>
                       ))}
-                    </ul>
+                    </div>
                   </div>
                   <div>
                     <h4>Top Artists</h4>
-                    <ul style={{ listStyle: 'none', padding: 0 }}>
-                      {wrappedData[selectedTimeRange].artists.map((artist: Artist) => (
-                        <li key={artist.name} style={{ margin: '10px 0' }}>
-                          <a
-                            href={artist.external_urls.spotify}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="App-link"
-                          >
-                            {artist.name}
-                          </a>
-                          <span> ({artist.genres.slice(0, 3).join(', ')})</span>
-                        </li>
+                    <div className="wrapped-grid">
+                      {(wrappedLoading[selectedTimeRange] ? Array.from({ length: 8 }, (_, i) => ({ __key: i })) : wrappedData[selectedTimeRange].artists).map((artist: any) => (
+                        <a
+                          key={artist.__key ?? artist.name + artist.url}
+                          href={artist.url || '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`card artist-card ${artist.__key !== undefined ? 'skeleton' : ''}`}
+                          aria-label={artist.__key !== undefined ? 'Loading artist' : `Open ${artist.name} on Spotify`}
+                        >
+                          <div className="avatar">
+                            {artist.__key !== undefined ? (
+                              <div className="avatar-fallback shimmer" />
+                            ) : artist.image ? (
+                              <img loading="lazy" src={artist.image} alt={`${artist.name} photo`} />
+                            ) : (
+                              <div className="avatar-fallback">{artist.name.charAt(0)}</div>
+                            )}
+                          </div>
+                          <div className="card-text">
+                            <div className="title" title={artist.name}>{artist.__key !== undefined ? '\u00A0' : artist.name}</div>
+                            <div className="subtitle" title={artist.genres?.slice(0,3).join(', ')}>
+                              {artist.__key !== undefined ? '\u00A0' : artist.genres.slice(0, 3).join(', ')}
+                            </div>
+                          </div>
+                        </a>
                       ))}
-                    </ul>
+                    </div>
                   </div>
                 </div>
-              )}
+              ) : !wrappedLoading[selectedTimeRange] ? (
+                <div className="house-info empty-state" style={{ marginTop: 20, maxWidth: '800px', textAlign: 'center', padding: '24px' }}>
+                  <div className="empty-emoji" aria-hidden>🎧</div>
+                  <h3 className="empty-title">No Wrapped Yet</h3>
+                  <p className="empty-text">We'll fetch your top tracks and artists once you're sorted—or try another time range.</p>
+                </div>
+              ) : null}
             </section>
           </>
         )}
