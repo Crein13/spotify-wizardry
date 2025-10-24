@@ -19,6 +19,9 @@ dotenv.config();
 
 const app = express();
 
+// Trust proxy - required for secure cookies behind proxies/tunnels
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://127.0.0.1:3000',
@@ -30,12 +33,12 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
-  resave: true,
-  saveUninitialized: true,
+  resave: false,
+  saveUninitialized: false,
   cookie: {
-    secure: false, // set to true in production with HTTPS
+    secure: true, // Required for HTTPS (dev tunnels use HTTPS)
     httpOnly: true,
-    sameSite: 'lax',
+    sameSite: 'none', // Required for cross-site requests with dev tunnels
     maxAge: 1000 * 60 * 60 * 24 // 24 hours
   }
 }));
@@ -62,7 +65,7 @@ app.use('/api/spotify', spotifyRoutes); // This will handle /api/spotify/*
 app.use('/api', houseRoutes);
 
 // Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const PORT: number = parseInt(process.env.PORT ?? "5000", 10);
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server is running on port ${PORT}`);
 });

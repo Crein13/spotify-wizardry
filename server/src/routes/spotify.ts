@@ -42,7 +42,6 @@ router.get('/auth/spotify/callback', async (req, res) => {
     // Save to session and wait for it to be saved
     req.session.accessToken = accessToken;
     req.session.refreshToken = refreshToken;
-
     await new Promise((resolve) => req.session.save(resolve));
 
     // Redirect to frontend
@@ -54,6 +53,7 @@ router.get('/auth/spotify/callback', async (req, res) => {
 
 // Helper route: Get access token from session
 router.get('/token', (req, res) => {
+
   if (!req.session) {
     return res.status(500).json({ error: 'No session available' });
   }
