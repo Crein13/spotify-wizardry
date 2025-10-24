@@ -95,13 +95,12 @@ function App() {
           .then((data) => {
             if (data.accessToken) {
               setAccessToken(data.accessToken);
-              console.log('Successfully retrieved access token');
             } else {
-              console.error('No access token in response:', data);
+              // Redirect back to login if no access token
+              window.location.href = `${BACKEND_URL}/auth/spotify`;
             }
           })
-          .catch((error) => {
-            console.error('Error fetching token:', error);
+          .catch(() => {
             // Redirect back to login if authentication failed
             window.location.href = `${BACKEND_URL}/auth/spotify`;
           });
@@ -141,7 +140,6 @@ function App() {
       setHouseFlash(true);
       setTimeout(() => setHouseFlash(false), 700);
     } catch (err) {
-      console.error('Error fetching genres and house info:', err);
       alert('Error analyzing your music taste');
     }
     setLoading(false);
@@ -163,7 +161,7 @@ function App() {
         [timeRange]: data
       }));
     } catch (err) {
-      console.error('Error fetching wrapped data:', err);
+      // Silently handle error - wrapped data is optional
     }
   };
 
@@ -310,7 +308,6 @@ function App() {
                         .map((h) => {
                         const pct = houseInfo.normalizedPercentages?.[h] ?? houseInfo.housePercentages?.[h] ?? 0;
                         const comp = houseInfo.compatibility?.[h] ?? 0;
-                        const raw = houseInfo.rawScores?.[h] ?? 0;
                         const isTop = h === houseInfo.house;
                         const meta = HOUSE_META[h] || { shortDesc: '', musicPersonality: '' };
                         const tipText = `${meta.shortDesc} ${meta.musicPersonality} ${meta.examples ? 'Notable: ' + meta.examples.join(', ') : ''}`;

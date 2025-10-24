@@ -36,7 +36,6 @@ router.get('/auth/spotify/callback', async (req, res) => {
 
     // Store tokens in session
     if (!req.session) {
-      console.error('No session found');
       return res.status(500).send('Session not initialized');
     }
 
@@ -46,30 +45,15 @@ router.get('/auth/spotify/callback', async (req, res) => {
 
     await new Promise((resolve) => req.session.save(resolve));
 
-    console.log('Session after save:', {
-      hasAccessToken: !!req.session.accessToken,
-      hasRefreshToken: !!req.session.refreshToken
-    });
-
     // Redirect to frontend
     res.redirect(`${process.env.CLIENT_URL || 'http://127.0.0.1:3000'}?loggedin=true`);
   } catch (error) {
-    console.error('Spotify OAuth callback error:', error);
     res.status(500).send('Failed to authenticate with Spotify');
   }
 });
 
 // Helper route: Get access token from session
 router.get('/token', (req, res) => {
-  // Debug logging
-  console.log('Token route accessed');
-  console.log('Session:', req.session);
-  console.log('Access Token:', req.session?.accessToken);
-  console.log('Session in token route:', {
-    hasSession: !!req.session,
-    hasAccessToken: req.session?.accessToken ? true : false
-  });
-
   if (!req.session) {
     return res.status(500).json({ error: 'No session available' });
   }
@@ -117,7 +101,6 @@ router.post('/genres', async (req, res) => {
       ...houseSortResult
     });
   } catch (error) {
-    console.error('Error fetching Spotify genres:', error);
     res.status(500).json({ error: 'Failed to fetch genres from Spotify.' });
   }
 });
@@ -141,7 +124,6 @@ router.get('/wrapped', async (req, res) => {
       artists: topArtistsData.body.items || [],
     });
   } catch (error) {
-    console.error('Error fetching Spotify wrapped data:', error);
     res.status(500).json({ error: 'Failed to fetch wrapped data from Spotify.' });
   }
 });
