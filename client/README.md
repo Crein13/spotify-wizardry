@@ -1,46 +1,69 @@
-# Getting Started with Create React App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Spotify Wizardry — Client
 
-## Available Scripts
+The client is a small React + TypeScript single-page app that lets a user log in with Spotify and be sorted into a Harry Potter–inspired music "house" (Auralis, Nocturne, Virtuo, Folklore) based on their listening tastes.
 
-In the project directory, you can run:
+This README explains what the client does, how it displays house information, and how it consumes the server API (the server is the single source of truth for house descriptions, traits, and example artists).
 
-### `npm start`
+## What is a "House" in this app?
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+- A house is a themed bucket inspired by Harry Potter houses but rebuilt around musical personalities.
+- Each house (Auralis, Nocturne, Virtuo, Folklore) has:
+	- a list of representative genres,
+	- a short description and a larger "music personality" blurb,
+	- traits and a small list of famous musicians used as examples.
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+The client shows the user's top house and a percentage breakdown for all houses, plus a compatibility score (how similar the other houses are to the top house for this user).
 
-### `npm test`
+## How the client determines a house (overview)
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- The client fetches top artist data from Spotify via the server and requests a house sort by POSTing to `/api/spotify/genres`.
+- The server extracts genres from the user's top artists and runs `sortHouseByGenres(genres)` (see server README for details on the algorithm). The server returns:
+	- `genres`: list of distinct genres found in the user's top artists,
+	- `topArtists`: a lightweight list (name, Spotify URL, image, genres) used to enrich tooltips,
+	- `allHouseDetails`: the server-side house metadata (descriptions, traits, etc.),
+	- and the house sort result including `house`, `matchScore`, `housePercentages`, `normalizedPercentages`, `compatibility`, and `rawScores`.
 
-### `npm run build`
+The client uses these fields to render the Sorting Hat UI, per-house parchment tooltips, and example artist thumbnails.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Data & Terms
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+- matchScore — a confidence value (0–100) calculated as the ratio of matching genres for the top house vs the total genres seen.
+- housePercentages — raw per-house percentages computed against the total number of detected genres (may not sum to 100).
+- normalizedPercentages — percentages normalized to sum exactly to 100 based on the score distribution; these are used for the UI bars.
+- compatibility — a per-house score (0–100) representing how similar each house is to the top house. It is based on genre overlap (intersection/union), weighted by the house shares and scaled by the matchScore.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Running the client
 
-### `npm run eject`
+1. Install dependencies:
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+```bash
+cd client
+npm install
+```
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+2. Start the dev server:
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+```bash
+npm start
+```
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+Open http://localhost:3000. The client expects the server to be running and reachable at the address configured in the environment (typically via `.env` / `CLIENT_URL`).
 
-## Learn More
+## Time ranges
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+The client can request Spotify data for different time ranges (short_term, medium_term, long_term). The selected range is POSTed to `/api/spotify/genres` and the server fetches top artists for that range.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Tooltip content and enrichment
+
+- Tooltips (parchment style) are populated from `allHouseDetails` returned by the server so the frontend uses a single source of truth.
+- The server also returns `topArtists` so the client can show thumbnail images and links to Spotify inside tooltips or example lists.
+
+## Notes
+
+- The client contains some themed styles (Sorting Hat animation, parchment tooltips). Keep `client/src/App.css` updated when changing tooltip behavior.
+- If you change the house metadata on the server, the client will automatically show the updated descriptions on the next fetch.
+
+## Learn more / Troubleshooting
+
+- See the server README (`server/README.md`) for details about the sorting algorithm, API routes, and environment variables.
