@@ -83,6 +83,23 @@ npm run build
 npm start
 ```
 
+## Testing
+
+The server includes a comprehensive test suite with 35+ unit tests covering the house sorting algorithm.
+
+Run tests:
+
+```bash
+cd server
+npm test                 # Run all tests
+npm run test:watch       # Run in watch mode
+npm run test:coverage    # Run with coverage report
+```
+
+**Test Coverage**: 100% statements, 92.85% branches, 100% functions
+
+See `TESTING.md` and `src/utils/__tests__/README.md` for detailed test documentation.
+
 ## Types
 
 Key exported types (in `server/src/utils/houseSort.ts`):
