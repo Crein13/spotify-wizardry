@@ -105,6 +105,68 @@
     transition: width 400ms ease;
   }
 
+  .info-icon {
+    position: relative;
+    display: inline-block;
+    margin-left: 8px;
+    color: #61dafb;
+    cursor: help;
+    font-weight: 600;
+  }
+
+  /* tooltip bubble (parchment-like) */
+  .info-icon::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(180deg, #fbf6e3 0%, #f2e9c9 100%);
+    color: #2b1e12;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 0.75em;
+    font-family: Georgia, 'Times New Roman', serif;
+    max-width: min(280px, 90vw);
+    min-width: 160px;
+    width: max-content;
+    white-space: normal;
+    word-wrap: break-word;
+    line-height: 1.4;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.16s ease, transform 0.16s cubic-bezier(.2,.9,.2,1);
+    z-index: 30;
+    box-shadow: 0 6px 18px rgba(99, 66, 18, 0.12), inset 0 -1px 0 rgba(0,0,0,0.03);
+  }
+
+  /* subtle upward motion when shown */
+  .info-icon:hover::after {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-6px);
+  }
+
+  /* little golden sparkle above tooltip */
+  .info-icon::before {
+    content: '✦';
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%) translateY(0) scale(0.8);
+    color: rgba(255, 215, 0, 0.9);
+    font-size: 0.65em;
+    opacity: 0;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    pointer-events: none;
+  }
+
+  .info-icon:hover::before {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-4px) scale(1);
+  }
+
+
 
 @keyframes App-logo-spin {
   from {

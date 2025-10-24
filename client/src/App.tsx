@@ -12,6 +12,7 @@ interface HouseInfo {
   housePercentages: Record<string, number>;
   compatibility: Record<string, number>;
   normalizedPercentages?: Record<string, number>;
+  rawScores?: Record<string, number>;
 }
 
 interface Track {
@@ -106,6 +107,9 @@ function App() {
         matchScore: data.matchScore,
         housePercentages: data.housePercentages || {},
         compatibility: data.compatibility || {}
+      ,
+        normalizedPercentages: data.normalizedPercentages || {},
+        rawScores: data.rawScores || {}
       });
     } catch (err) {
         console.error('Error fetching genres and house info:', err);
@@ -161,6 +165,10 @@ function App() {
                   <div className="match-score" style={{ marginBottom: '20px' }}>
                     <p style={{ fontSize: '1.2em' }}>
                       Match Score: <strong>{houseInfo.matchScore}%</strong>
+                      <span
+                        className="info-icon"
+                        data-tip="Match Score is how well your detected genres match the top house (percentage of top house matches across your detected genres). Higher means the top house fits your tastes more closely."
+                      >ⓘ</span>
                     </p>
                   </div>
                   <div className="house-description" style={{ marginBottom: '20px' }}>
@@ -197,9 +205,21 @@ function App() {
 
                   {/* Other houses + compatibility */}
                   <div className="other-houses" style={{ marginTop: 30 }}>
-                    <h3>Other Houses & Compatibility</h3>
+                    <h3>
+                      Other Houses & Compatibility
+                      <span
+                        className="info-icon"
+                        data-tip="Compatibility combines genre overlap between houses and how much of your musical profile matches each house, then scales by the top house match confidence. It expresses stylistic similarity, not social personality."
+                      >ⓘ</span>
+                    </h3>
                     <div className="house-list">
-                      {['Auralis', 'Nocturne', 'Virtuo', 'Folklore'].map((h) => {
+                      {['Auralis', 'Nocturne', 'Virtuo', 'Folklore']
+                        .filter((h) => {
+                          // show house if it's the top house or has a raw score > 0
+                          const raw = houseInfo.rawScores?.[h] ?? 0;
+                          return h === houseInfo.house || raw > 0;
+                        })
+                        .map((h) => {
                         const pct = houseInfo.normalizedPercentages?.[h] ?? houseInfo.housePercentages?.[h] ?? 0;
                         const comp = houseInfo.compatibility?.[h] ?? 0;
                         const isTop = h === houseInfo.house;

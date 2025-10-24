@@ -49,6 +49,7 @@ export interface HouseSortResult {
   housePercentages: Record<HouseName, number>;
   compatibility: Record<HouseName, number>; // compatibility of top house with each house (0-100)
   normalizedPercentages: Record<HouseName, number>; // normalized to sum to 100
+  rawScores?: Record<HouseName, number>;
 }
 
 export function sortHouseByGenres(genres: string[]): HouseSortResult {
@@ -133,10 +134,23 @@ export function sortHouseByGenres(genres: string[]): HouseSortResult {
     // intersection / union as a simple compatibility metric
     const intersection = [...topHouseGenres].filter(g => otherGenres.has(g)).length;
     const union = new Set([...topHouseGenres, ...otherGenres]).size;
-    compatibility[h as HouseName] = union > 0 ? Math.round((intersection / union) * 100) : 0;
+    const overlapRatio = union > 0 ? intersection / union : 0; // 0..1
+
+    // base share from normalized percentages
+    const baseShare = normalizedPercentages[h as HouseName] / 100; // 0..1
+
+    // raw similarity: weight overlap more than base share
+    const rawSimilarity = (0.7 * overlapRatio) + (0.3 * baseShare);
+
+    // scale by top house matchScore to reflect confidence
+    const scaled = rawSimilarity * (matchScore / 100);
+    compatibility[h as HouseName] = Math.round(scaled * 100);
   }
 
   const houseInfo = houseDetails[sortedHouse];
+  // include raw scores for frontend filtering/visibility
+  const rawScores: Record<HouseName, number> = { ...scores };
+
   return {
     house: sortedHouse,
     description: houseInfo.description,
@@ -146,6 +160,7 @@ export function sortHouseByGenres(genres: string[]): HouseSortResult {
     matchScore: matchScore,
     housePercentages,
     compatibility
-    ,normalizedPercentages
+    ,normalizedPercentages,
+    rawScores
   };
 }
