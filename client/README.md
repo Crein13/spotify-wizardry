@@ -50,6 +50,31 @@ npm start
 
 Open http://localhost:3000. The client expects the server to be running and reachable at the address configured in the environment (typically via `.env` / `CLIENT_URL`).
 
+## Testing
+
+The client includes a comprehensive test suite built with React Testing Library.
+
+Run tests:
+
+```bash
+cd client
+npm test                 # Run tests in watch mode
+npm test -- --watchAll=false  # Run once
+npm test -- --coverage   # Run with coverage report
+```
+
+**Test Coverage**: 31 tests, 76% code coverage
+
+Test categories:
+- Initial Render (4 tests)
+- Authentication Flow (4 tests)
+- Time Range Selector (4 tests)
+- House Sorting (11 tests)
+- Wrapped Data Display (5 tests)
+- Accessibility (2 tests)
+
+See `TESTING.md` for detailed test documentation.
+
 ## Time ranges
 
 The client can request Spotify data for different time ranges (short_term, medium_term, long_term). The selected range is POSTed to `/api/spotify/genres` and the server fetches top artists for that range.
