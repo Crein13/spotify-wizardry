@@ -112,6 +112,17 @@
     color: #61dafb;
     cursor: help;
     font-weight: 600;
+    /* make it keyboard focusable */
+    outline: none;
+    /* ensure clickable area */
+    padding: 2px 4px;
+    margin: -2px -4px;
+  }
+
+  /* Focus styles for keyboard navigation */
+  .info-icon:focus {
+    outline: 2px solid #61dafb;
+    border-radius: 4px;
   }
 
   /* tooltip bubble (parchment-like) */
@@ -141,15 +152,16 @@
     box-shadow: 0 6px 18px rgba(99, 66, 18, 0.12), inset 0 -1px 0 rgba(0,0,0,0.03);
   }
 
-  /* subtle upward motion when shown */
-  .info-icon:hover::after {
+  /* show tooltip on hover OR keyboard focus */
+  .info-icon:hover::after,
+  .info-icon:focus::after {
     opacity: 1;
     transform: translateX(-50%) translateY(-6px);
   }
 
-  /* little golden sparkle above tooltip */
+  /* magical sparkle above tooltip */
   .info-icon::before {
-    content: '✦';
+    content: '⚡';
     position: absolute;
     bottom: calc(100% + 12px);
     left: 50%;
@@ -159,20 +171,17 @@
     opacity: 0;
     transition: opacity 0.18s ease, transform 0.18s ease;
     pointer-events: none;
+    animation: twinkle 1.5s ease-in-out infinite;
   }
 
-  .info-icon:hover::before {
+  /* show sparkle on hover OR keyboard focus */
+  .info-icon:hover::before,
+  .info-icon:focus::before {
     opacity: 1;
     transform: translateX(-50%) translateY(-4px) scale(1);
   }
 
-
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.4; transform: translateX(-50%) translateY(-4px) scale(0.8); }
+    50% { opacity: 1; transform: translateX(-50%) translateY(-4px) scale(1.1); }
   }
-  to {
-    transform: rotate(360deg);
-  }
-}

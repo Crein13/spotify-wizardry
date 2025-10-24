@@ -167,7 +167,16 @@ function App() {
                       Match Score: <strong>{houseInfo.matchScore}%</strong>
                       <span
                         className="info-icon"
-                        data-tip="Match Score is how well your detected genres match the top house (percentage of top house matches across your detected genres). Higher means the top house fits your tastes more closely."
+                        tabIndex={0}
+                        role="button"
+                        aria-label="About Match Score"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            e.currentTarget.focus();
+                          }
+                        }}
+                        data-tip="Shows how well your music matches this house's style. Higher score means stronger alignment with the house's musical identity."
                       >ⓘ</span>
                     </p>
                   </div>
@@ -209,7 +218,16 @@ function App() {
                       Other Houses & Compatibility
                       <span
                         className="info-icon"
-                        data-tip="Compatibility combines genre overlap between houses and how much of your musical profile matches each house, then scales by the top house match confidence. It expresses stylistic similarity, not social personality."
+                        tabIndex={0}
+                        role="button"
+                        aria-label="About Compatibility"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            e.currentTarget.focus();
+                          }
+                        }}
+                        data-tip="Shows musical overlap between houses based on shared genres and your listening profile. Higher numbers suggest similar musical styles."
                       >ⓘ</span>
                     </h3>
                     <div className="house-list">
